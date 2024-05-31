@@ -16,7 +16,6 @@ class Cotto {
         OttoZertifikatHandle certificateHandle;
         OttoRueckgabepufferHandle contentHandle;
         OttoEmpfangHandle downloadHandle;
-        const char* pathDownload;
     public:
         Cotto(const char* pathLog, const char* pathCertificate, const char* certificatePassword) {
             // Create instance
