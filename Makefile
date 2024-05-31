@@ -15,7 +15,7 @@ cotto:
 		exit 2; \
 	fi
 
-	@if [ -z "$$(find $(PATH_VENDOR) -name '*otto.*' -print -quit)" ]; then \
+	@if [ -z "$$(find '$(PATH_VENDOR)' -name '*otto.*' -print -quit)" ]; then \
 		echo "Error: No file matching *otto.{dll,dylib,so} found in $(PATH_VENDOR)"; \
 		exit 3; \
 	fi
