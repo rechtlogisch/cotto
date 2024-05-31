@@ -52,7 +52,7 @@ Follow the steps to run `cotto` locally:
 ```bash
 git clone git@github.com:rechtlogisch/cotto.git
 cd cotto
-./CEZ/get-test-cez-certificate.sh
+./get-test-cez-certificate.sh
 PATH_VENDOR="/path/to/otto-library/" make
 DEVELOPER_ID="_____" ./cotto -u 2b884e20-779d-4094-a1de-8304a6fc00c9
 ```
