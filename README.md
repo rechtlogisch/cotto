@@ -33,7 +33,9 @@ Hint: Currently, a limited list of object UUIDs is available. You can get a list
 
 ## Vendor
 
-You need the official ELSTER Otto library. Download the ERiC package v40 for your platform from the [ELSTER developer area](https://www.elster.de/elsterweb/entwickler/infoseite/eric), unzip it and place it at a desired path. Feel free to place it in `./vendor/`. Currently, you only need one library: `(lib)otto.{so,dylib,dll}`, as Otto supports only client-side generated certificates (German abbreviation: CEZ).
+You need the official ELSTER Otto library. Download the ERiC package v40 for your platform from the [ELSTER developer area](https://www.elster.de/elsterweb/entwickler/infoseite/eric), unzip it and place it at a desired path. Feel free to place it in `./vendor/`. Currently, you only need one library called `otto` (platform dependent naming: `(lib)otto.{so,dylib,dll}`), as Otto supports only client-side generated certificates (German abbreviation: CEZ).
+
+Notice: The ERiC package, inespecially the included there libraries are subject to a seperate license agreement (presented before download in the ELSTER developer area and included in the ERiC package itself).
 
 Hint: Choose the right library for the platform you compile and run on.
 
@@ -91,3 +93,11 @@ If you discover any security-related issues, please email open-source@rechtlogis
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+
+The ERiC package, especially libraries, is not included in this repository and is subject to a separate license agreement. Please see the [ELSTER developer area](https://www.elster.de/elsterweb/entwickler/infoseite/eric) or the lizenz.pdf included in the ERiC package for more information.
+
+## Disclaimer
+
+This demo was developed by [RL Recht logisch GmbH & Co. KG](https://rechtlogisch.de/impressum/) and should be used only for test purposes.
+
+ELSTER is a registered trademark of the Freistaat Bayern, represented by the Bayerische Staatsministerium der Finanzen.
