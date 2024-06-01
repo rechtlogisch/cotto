@@ -8,7 +8,7 @@ A working example of the Otto library implementation in C++.
 
 Notice: This demo is **not intended for productive usage**!
 
-ELSTER introduced on May 27th, 2024, a new library called Otto, which can be used to download objects from OTTER (Object Storage in ELSTER). The reason why ELSTER introduced the project and library is, that the current solution hit its limits. Otto was introduced together with Datenabholung v30. The currently available way of data retrieval with ERiC will be replaced client-side with ERiC version 41 (end November 2024; only Datenabholung v30 will be available) and server-side with the planned yearly minimal version increase mid-April 2025 (exact date TBA in 2025).
+ELSTER introduced on May 27th, 2024, a new library called Otto, which can be used to download objects from OTTER (Object Storage in ELSTER). The reason why ELSTER introduced the project and library is, that the current solution hit its limits. Otto was introduced together with Datenabholung v30. The currently available way of data retrieval with ERiC will be replaced client-side in ERiC version 41 (end November 2024; only Datenabholung v30 will be available) and server-side with the planned yearly minimal version increase mid-April 2025 (exact date TBA in 2025; only ERiC >= v41 can be used after that date).
 
 ## Usage
 
