@@ -49,13 +49,24 @@ make
 
 Hints: provide `PATH_VENDOR` environment variable to point the path where the ELSTER `otto` library is placed on your system or place the needed libraries in `./vendor/`.
 
+## Run
+
 Follow the steps to run `cotto` locally:
 
 ```bash
+# Clone repository
 git clone git@github.com:rechtlogisch/cotto.git
+
+# Changed to directory with source code
 cd cotto
+
+# Retrieve CEZ certificate to "CEZ" subdirectory
 ./get-test-cez-certificate.sh
+
+# Compile statically linked to Otto library placed in PATH_VENDOR
 PATH_VENDOR="/path/to/otto-library/" make
+
+# Run `cotto`, provide objectUuid with -u option and your DEVELOPER_ID inline
 DEVELOPER_ID="_____" ./cotto -u 2b884e20-779d-4094-a1de-8304a6fc00c9
 ```
 
