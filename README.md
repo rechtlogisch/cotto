@@ -57,7 +57,7 @@ Follow the steps to run `cotto` locally:
 # Clone repository
 git clone git@github.com:rechtlogisch/cotto.git
 
-# Changed to directory with source code
+# Change to directory with source code
 cd cotto
 
 # Retrieve CEZ certificate to "CEZ" subdirectory
