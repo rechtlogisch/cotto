@@ -182,11 +182,11 @@ int main(const int argc, char *argv[]) {
             char userChoice;
             std::cout << "File: " << filepath << " already exists. Do you want to overwrite it? (y/n)" << std::endl;
             std::cin >> userChoice;
-            if (userChoice != 'y' && userChoice != 'Y') {
+            if (userChoice == 'y' || userChoice == 'Y') {
+                unlink(filepath.c_str());
+            } else {
                 std::cerr << "File: " << filepath << " was not overwritten." << std::endl;
                 return 5;
-            } else {
-                unlink(filepath.c_str());
             }
         }
     }
