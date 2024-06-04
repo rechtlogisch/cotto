@@ -185,7 +185,7 @@ int main(const int argc, char *argv[]) {
             if (userChoice == 'y' || userChoice == 'Y') {
                 unlink(filepath.c_str());
             } else {
-                std::cerr << "File: " << filepath << " was not overwritten." << std::endl;
+                std::cerr << "File: " << filepath << " was not overwritten. Stopping." << std::endl;
                 return 5;
             }
         }
