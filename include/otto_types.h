@@ -136,41 +136,66 @@ typedef char byteChar;
 /**
  * @brief  Diese Struktur enthält alle Informationen, die Otto benötigt,
  *         um die Verbindung zum OTTER-Server oder dem ELSTER-eID-Server über
- *         einen HTTPS-Proxy aufzubauen.
- *
- * @param  version
- *         Die Version der Struktur. Hier ist aktuell fest der Wert 1 zu setzen.
- *
- * @param  url
- *         Die URL des Proxies.
- *         Dieses Element darf nicht NULL sein.
- *
- * @param  benutzerName
- *         Der Benutzername für eine Proxy-Authentifizierung.
- *         Dieses Element darf NULL sein.
- *
- * @param  benutzerPasswort
- *         Das Passwort für eine Proxy-Authentifizierung.
- *         Dieses Element darf NULL sein.
- *
- * @param  authentifizierungsMethode
- *         Die Authentifizierungsmethode, mit der der Proxy arbeitet.
- *         Folgende Methoden werden unterstützt:
- *           - "Any"
- *           - "Basic"
- *           - "Digest"
- *           - "DigestIE"
- *           - "NTLM"
- *           - "SPNEGO"
- *         Mehrere Werte sind durch Kommas getrennt anzugeben.
- *         Die Groß-, Kleinschreibung der Werte wird ignoriert.
- *         Dieses Element darf nicht NULL sein.
+ *         einen Proxy aufzubauen.
  */
 typedef struct {
+	
+	/**
+     * @brief Die Version der Struktur.
+	 *
+     * Hier ist aktuell fest der Wert 1 zu setzen.
+	 */
     int version; // Aktuell immer auf 1 zu setzen
+	
+	/**
+     * @brief Die URL des Proxies einschließlich Port.
+	 *
+     * IPv6-Adressen sind in eckigen Klammern anzugeben.
+     * Otto unterstützt folgende Protokolle:
+     *   - http
+     *   - socks4
+     *   - socks5
+     *   .
+     * Beispiele:
+     *   - mein.pro.xy:1234
+     *   - http://203.0.113.0:1234
+     *   - socks4://mein.pro.xy:1234
+     *   - socks5://[2001:0DB8:AC10:FE01::]:1234
+     *   .
+     * Dieses Element darf nicht NULL sein.
+	 */
     const byteChar *url;
+	
+	/**
+     * @brief Der Benutzername für eine Proxy-Authentifizierung.
+	 *
+     * Dieses Element darf NULL sein.
+	 */
     const byteChar *benutzerName;
+	
+    /**
+     * @brief Das Passwort für eine Proxy-Authentifizierung.
+	 *
+     * Dieses Element darf NULL sein.
+	 */
     const byteChar *benutzerPasswort;
+	
+	/**
+	 * @brief Die Authentifizierungsmethode, mit der der Proxy arbeitet.
+	 *
+	 * Folgende Methoden werden unterstützt:
+	 *   - "Any"
+	 *   - "Basic"
+	 *   - "Digest"
+	 *   - "DigestIE"
+	 *   - "NTLM"
+	 *   - "SPNEGO"
+	 *   .
+	 * Mehrere Werte sind durch Kommas getrennt anzugeben.
+	 * Die Groß-, Kleinschreibung der Werte wird ignoriert.
+	 * Dieses Element darf NULL sein, wenn der Proxy keine
+	 * Authentifizierung erfordert.	
+	 */
     const char *authentifizierungsMethode;
 } OttoProxyKonfiguration; 
 

@@ -224,7 +224,8 @@ OttoStatusCode OttoRueckgabepufferErzeugen(OttoInstanzHandle instanz,
 
 /**
  * @brief      Gibt die Anzahl der im Rückgabepuffer
- *             enthaltenen Bytes zurück.
+ *             enthaltenen Bytes zurück. Das abschließende Null-Byte wird
+ *             nicht mitgezählt.
  *
  * @param[in]  rueckgabepuffer
  *             Das Handle des Rückgabepuffers
@@ -249,6 +250,10 @@ uint64_t OttoRueckgabepufferGroesse(OttoRueckgabepufferHandle rueckgabepuffer);
  * Dieses Array existiert so lange im Speicher, bis der Rückgabepuffer
  * entweder (bei einer Wiederverwendung des Handles) erneut beschrieben
  * oder der Puffer explizit freigegeben wird.
+ * Der Array wird immer von einem Null-Byte abgeschlossen. Wenn der
+ * Rückgabepuffer keine weiteren Null-Bytes enthält, kann folglich der
+ * Rückgabepufferinhalt bequem als null-terminierte Zeichenkette
+ * interpretiert werden.
  *
  * @param[in]  rueckgabepuffer
  *             Das Handle des Rückgabepuffers, dessen Inhalt zurückgegeben werden soll.
@@ -305,6 +310,8 @@ OttoStatusCode OttoPruefsummeErzeugen(OttoInstanzHandle instanz, OttoPruefsummeH
 
 /**
  * @brief      Aktualisiert die Prüfsumme über Daten.
+ *             Eine Prüfsumme, die bereits signiert wurde, kann nicht mehr
+ *             aktualisiert werden.
  *
  * @param[in,out] pruefsumme
  *                Handle der Prüfsumme, die aktualisiert werden soll.
@@ -319,6 +326,10 @@ OttoStatusCode OttoPruefsummeErzeugen(OttoInstanzHandle instanz, OttoPruefsummeH
  *             - OttoPruefsummeErzeugen()
  *             - OttoPruefsummeSignieren()
  *             - OttoPruefsummeFreigeben()
+ * 
+ * @return
+ *             - ::OTTO_OK wenn die Prüfsumme erfolgreich aktualisiert werden konnte
+ *             - ::OTTO_PRUEFSUMME_FINALISIERT wenn die Prüfsumme bereits signiert wurde
  */
 OttoStatusCode OttoPruefsummeAktualisieren(OttoPruefsummeHandle pruefsumme,
                                            const byteChar *datenBlock,
@@ -326,6 +337,11 @@ OttoStatusCode OttoPruefsummeAktualisieren(OttoPruefsummeHandle pruefsumme,
 
 /**
  * @brief      Erstellt eine Signatur über eine Prüfsumme.
+ *             Die Signierung der Prüfsumme ist nur dann möglich,
+ *             wenn diese über die Mindestdatenmenge für eine Übermittlung
+ *             an den OTTER-Server berechnet wurde. (20 MiB)
+ *             Eine Prüfsumme kann nur einmalig signiert werden.
+ *             Danach muß das Prüfsummenobjekt freigegeben werden.
  *
  * @param[in]  pruefsumme
  *             Handle der Prüfsumme, die signiert werden soll.
@@ -336,11 +352,19 @@ OttoStatusCode OttoPruefsummeAktualisieren(OttoPruefsummeHandle pruefsumme,
  * @param[out] rueckgabepuffer
  *             Handle des Rückgabepuffers, in den die signierte Prüfsumme
  *             geschrieben werden soll.
+ *             Die signierte Prüfsumme wird als base64-codierte Zeichenfolge übergeben.
  *
  * @see
  *             - OttoPruefsummeErzeugen()
  *             - OttoPruefsummeAktualisieren()
  *             - OttoPruefsummeFreigeben()
+ * 
+ * @return
+ *             - ::OTTO_OK wenn die Prüfsumme signiert werden konnte
+ *             - ::OTTO_PRUEFSUMME_FINALISIERT wenn die Prüfsumme bereits signiert wurde
+ *             - ::OTTO_VERSAND_GERINGE_DATENMENGE wenn die Prüfsumme über weniger Daten gebildet wurde als für den Versand an den OTTER-Server erforderlich sind
+ *             - ::OTTO_ESIGNER_* bei Problemen mit dem übergebenen Zertifikat
+ *             
  */
 OttoStatusCode OttoPruefsummeSignieren(OttoPruefsummeHandle pruefsumme,
                                        OttoZertifikatHandle zertifikat,
@@ -366,8 +390,9 @@ OttoStatusCode OttoPruefsummeFreigeben(OttoPruefsummeHandle pruefsumme);
  *
  * Das zurückgegebene Handle des Versandobjekts wird der Funktion
  * OttoVersandFortsetzen() übergeben, um Daten blockweise hochzuladen.
- * Sind alle Daten versendet, wird OttoVersandBeenden() aufgerufen, womit
- * der Versand abgeschlossen und das Versandobjekt freigegeben wird. <br>
+ * Sind alle Daten versendet, wird OttoVersandAbschliessen() aufgerufen, womit
+ * der Versand abgeschlossen wird.
+ * Zum Freigeben des Versandobjekts wird OttoVersandBeenden() aufgerufen.<br>
  * Bevor der Versand begonnen werden kann, muss eine Prüfsumme über alle zu
  * versendenen Daten gebildet (siehe OttoPruefsummeErzeugen()) und mit
  * OttoPruefsummeSignieren() signiert werden.
@@ -383,6 +408,8 @@ OttoStatusCode OttoPruefsummeFreigeben(OttoPruefsummeHandle pruefsumme);
  * @param[in]  signiertePruefsumme
  *             Signierte Prüfsumme über die Gesamtheit der Daten, die in diesem Versand
  *             versendet werden sollen.
+ *             Die signierte Prüfsumme wird als base64-codierte, nullterminierte Zeichenfolge erwartet,
+ *             wie sie von OttoPruefsummeSignieren() zurückgeliefert wird.
  *
  * @param[in]  herstellerId
  *             Hersteller-ID des Softwareproduktes
@@ -390,11 +417,11 @@ OttoStatusCode OttoPruefsummeFreigeben(OttoPruefsummeHandle pruefsumme);
  * @param[out] versand
  *             Handle auf das Versandobjekt. Im Fehlerfall wird kein Versandobjekt erzeugt.
  *
- * @note       Diese Funktion ist derzeit noch nicht verwendbar!
- *
  * @see
  *             - OttoVersandFortsetzen()
+ *             - OttoVersandAbschliessen()
  *             - OttoVersandBeenden()
+ *             - OttoPruefsummeSignieren()
  *             - OttoProxyKonfigurationSetzen()
  */
 OttoStatusCode OttoVersandBeginnen(OttoInstanzHandle instanz,
@@ -406,13 +433,11 @@ OttoStatusCode OttoVersandBeginnen(OttoInstanzHandle instanz,
  * @brief      Versendet einen Datenblock an den OTTER-Server.
  *
  * Otto liest den übergebenen Datenblock ein und versendet ihn an den OTTER-Server.
- * Wenn @c OTTO_OK zurückgegeben wird, kann diese Funktion einem weiteren Datenblock
- * erneut aufgerufen werden. Dies ist zu wiederholen, bis Otto alle zu diesem Versand
- * gehörigen Daten erhalten hat.<br>
- * Ist das Ende der Daten erreicht, muss OttoVersandBeenden() aufgerufen werden.
- * Falls OttoVersandFortsetzen() nicht @c OTTO_OK zurückgibt, ist der Versand fehlgeschlagen.
- * Auch in diesem Fall muss OttoVersandBeenden() aufgerufen werden, um das Versandobjekt
- * freizugeben.
+ * Wenn @c OTTO_OK zurückgegeben wird, kann diese Funktion erneut mit einem weiteren
+ * Datenblock aufgerufen werden. Dies ist zu wiederholen, bis Otto alle zu diesem Versand
+ * gehörigen Daten erhalten hat. Falls nicht @c OTTO_OK zurückgegeben wird, ist der
+ * Versand fehlgeschlagen.<br>
+ * Ist das Ende der Daten erreicht, muss OttoVersandAbschliessen() aufgerufen werden.
  *
  * @param[in]  versand
  *             Ein mit OttoVersandBeginnen() erzeugtes Handle
@@ -427,26 +452,22 @@ OttoStatusCode OttoVersandBeginnen(OttoInstanzHandle instanz,
  *             - ::OTTO_OK im Erfolgsfall
  *             - ::OTTO_TRANSFER_UNAUTHORIZED
  *             - ::OTTO_TRANSFER_CONNECTSERVER
- *
- * @note       Diese Funktion ist derzeit noch nicht verwendbar!
+ *             - ::OTTO_VERSAND_ABGESCHLOSSEN falls OttoVersandAbschliessen() bereits aufgerufen wurde
  *
  * @see
- *             - OttoVersandBeenden()
+ *             - OttoVersandAbschliessen()
  */
 OttoStatusCode OttoVersandFortsetzen(OttoVersandHandle versand,
                                      const byteChar *datenBlock,
                                      uint64_t datenBlockGroesse);
 
 /**
- * @brief      Schließt einen Versand ab und gibt das Versandobjekt frei.
+ * @brief      Schließt einen Versand ab und gibt die Objekt-ID zurück
  *
- * Mit dieser Funktion wird das Ende der Daten gekennzeichnet, der Datenversand abgeschlossen
- * und das Versandobjekt wieder freigegeben.
+ * Mit dieser Funktion wird das Ende der Daten gekennzeichnet und der Datenversand abgeschlossen.<br> 
  * Im Erfolgsfall wird die vom OTTER-Server vergebene Objekt-ID zurückgegeben, über die die
  * versendeten Daten bei OTTER referenziert werden.
- * In jedem Fall wird ein gültiges Versandobjekt wieder freigegeben. Das Versandobjekt
- * darf nach diesem Aufruf nicht mehr verwendet werden.
- *
+ * 
  * @param[in]  versand
  *             Ein mit OttoVersandBeginnen() erzeugtes Handle
  *
@@ -458,11 +479,26 @@ OttoStatusCode OttoVersandFortsetzen(OttoVersandHandle versand,
  *             - ::OTTO_TRANSFER_UNAUTHORIZED
  *             - ::OTTO_TRANSFER_CONNECTSERVER
  *             - ::OTTO_VERSAND_GERINGE_DATENMENGE
+ *             - ::OTTO_VERSAND_ABGESCHLOSSEN falls OttoVersandAbschliessen() bereits aufgerufen wurde
  *
- * @note       Diese Funktion ist derzeit noch nicht verwendbar!
  */
-OttoStatusCode OttoVersandBeenden(OttoVersandHandle versand,
-                                  OttoRueckgabepufferHandle objektId);
+OttoStatusCode OttoVersandAbschliessen(OttoVersandHandle versand,
+                                       OttoRueckgabepufferHandle objektId);
+
+/**
+ * @brief      Gibt ein Versandobjekt frei.
+ *
+ * Das Versandobjekt darf danach nicht wieder verwendet werden.
+ *
+ * @param[in]  versand
+ *             Handle des Versandobjekts, das freigegeben werden soll.
+ *
+ * @see
+ *             - OttoVersandBeginnen()
+ *             - OttoVersandFortsetzen()
+ *             - OttoVersandAbschliessen()
+ */
+OttoStatusCode OttoVersandBeenden(OttoVersandHandle versand);
 
 /**
  * @brief      Initialisiert eine Datenabholung vom OTTER-Server.
@@ -490,7 +526,7 @@ OttoStatusCode OttoVersandBeenden(OttoVersandHandle versand,
  *             Hersteller-ID des Softwareproduktes
  *
  * @param[out] empfang
- *             Handle auf das Empfangsobjekt. Im Fehlerfall wird kein Versandobjekt erzeugt.
+ *             Handle auf das Empfangsobjekt. Im Fehlerfall wird kein Empfangobjekt erzeugt.
  *
  * @see
  *             - OttoEmpfangFortsetzen()
@@ -505,6 +541,54 @@ OttoStatusCode OttoEmpfangBeginnen(OttoInstanzHandle instanz,
                                    OttoEmpfangHandle *empfang);
 
 /**
+ * @brief      Initialisiert eine Datenabholung vom OTTER-Server mit Angabe eines Abholzertifikats
+ *
+ * Das zurückgegebene Handle des Empfangsobjekts wird der Funktion
+ * OttoEmpfangFortsetzen() übergeben, um Daten blockweise abzuholen.
+ * Sind alle Daten abgeholt, wird OttoEmpfangBeenden() aufgerufen, womit
+ * das Empfangsobjekt wieder freigegeben wird.
+ * 
+ * Ein wichtiger Unterschied zu OttoEmpfangBeginnen() besteht darin, dass der OTTER-Server die Daten auf
+ * den in @p abholzertifikat enthaltenen öffentlichen Schlüssel umschlüsselt. Die Daten werden vom Otto
+ * nicht entschlüsselt und OttoEmpfangFortsetzen() gibt lediglich die verschlüsselten Daten zurück.
+ *
+ * @note       Wurde eine Otto-Instanz vor dem Aufruf dieser Funktion mit OttoProxyKonfigurationSetzen()
+ *             für einen Proxy konfiguriert, wird der Empfang über den Proxy durchgeführt.
+ *             Die Proxy-Konfiguration wird intern an dem Empfangsobjekt gespeichert und spätere Aufrufe
+ *             von OttoProxyKonfigurationSetzen() haben keinen Einfluss auf den bereits begonnenen Empfang.
+ *
+ * @param[in]  instanz
+ *             Handle der Otto-Instanz, auf der diese Funktion ausgeführt werden soll.
+ *
+ * @param[in]  objektId
+ *             ID des Objekts, das vom OTTER-Server abgeholt werden soll.
+ *
+ * @param[in]  zertifikat
+ *             Handle auf ein Zertifikatsobjekt
+ *
+ * @param[in]  herstellerId
+ *             Hersteller-ID des Softwareproduktes
+ *
+ * @param[in]  abholzertifikat
+ *             Base64-kodierter Teil eines X.509-v3-Zertifikats im PEM-Format
+ * 
+ * @param[out] empfang
+ *             Handle auf das Empfangsobjekt. Im Fehlerfall wird kein Empfangobjekt erzeugt.
+ *
+ * @see
+ *             - OttoEmpfangFortsetzen()
+ *             - OttoEmpfangBeenden()
+ *             - OttoProxyKonfigurationSetzen()
+ *
+ */
+OttoStatusCode OttoEmpfangBeginnenAbholzertifikat(OttoInstanzHandle instanz,
+                                                  const byteChar* objektId,
+                                                  OttoZertifikatHandle zertifikat,
+                                                  const byteChar* herstellerId,
+                                                  const byteChar* abholzertifikat,
+                                                  OttoEmpfangHandle* empfang);
+
+/**
  * @brief      Empfängt einen Datenblock vom OTTER-Server
  *
  * Otto empfängt Daten vom OTTER-Server und gibt sie blockweise an den Aufrufer zurück.
@@ -517,6 +601,8 @@ OttoStatusCode OttoEmpfangBeginnen(OttoInstanzHandle instanz,
  *
  * @param[out] datenBlock
  *             Rückgabepuffer mit allen oder einem Teil der empfangenen Daten. Falls leer, ist der Empfang beendet.
+ *             Der Inhalt des Rückgabepuffers darf nicht als null-terminierte Zeichenkette interpretiert werden, da die
+ *             empfangenen Daten weitere Null-Bytes enthalten können.
  *
  * @return
  *             - ::OTTO_OK
@@ -548,8 +634,8 @@ OttoStatusCode OttoEmpfangBeenden(OttoEmpfangHandle empfang);
 /**
  * @brief      Konfiguriert eine Otto-Instanz für einen Proxy.
  *
- * Damit eine Otto-Instanz ihre Internetverbindungen über einen,
- * Proxy aufbaut muss ihr die Proxy-Konfiguration über diese Methode
+ * Damit eine Otto-Instanz ihre Internetverbindungen über einen
+ * Proxy aufbaut, muss ihr die Proxy-Konfiguration über diese Methode
  * mitgeteilt werden.
  * Die Konfiguration gilt dann für alle Verbindungen der Instanz nach
  * außen, d.h. für die Verbindungen zu den OTTER-Servern ebenso wie
