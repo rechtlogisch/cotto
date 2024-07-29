@@ -19,7 +19,7 @@ int downloadError(const OttoStatusCode code)
             message = "The client is not allowed to use the API.";
             break;
         case OTTO_TRANSFER_NOT_FOUND:
-            message = "The OTTER server did not find the object";
+            message = "The OTTER server did not find the object.";
             break;
         default:
             message = "Error occurred while downloading. Check otto.log for details.";
