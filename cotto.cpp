@@ -3,11 +3,29 @@
 #include <unistd.h>
 #include "include/otto.h"
 
-int error(std::string message, OttoStatusCode code)
+int error(const std::string message, const OttoStatusCode code)
 {
     std::cerr << "[ERROR] " << message << std::endl;
     std::cerr << "[CODE]  " << code << std::endl;
     return code;
+}
+
+int downloadError(const OttoStatusCode code)
+{
+    const char *message;
+    
+    switch (code) {
+        case OTTO_TRANSFER_UNAUTHORIZED:
+            message = "The client is not allowed to use the API.";
+            break;
+        case OTTO_TRANSFER_NOT_FOUND:
+            message = "The OTTER server did not find the object";
+            break;
+        default:
+            message = "Error occurred while downloading. Check otto.log for details.";
+            break;
+    } 
+    return error(message, code);
 }
 
 class Cotto {
@@ -66,7 +84,7 @@ class Cotto {
             }
         }
 
-        int workflow(const char* objectUuid, const char* developerId, const char* fileExtension, const char* pathDownload, bool forceOverwrite = false) {
+        int workflow(const char* objectUuid, const char* developerId, const char* fileExtension, const char* pathDownload) {
             // Start download
             const OttoStatusCode statusCodeDownloadStart = OttoEmpfangBeginnen(instance, objectUuid, certificateHandle, developerId, &downloadHandle);
             if (statusCodeDownloadStart != OTTO_OK) {
@@ -118,7 +136,7 @@ class Cotto {
 
             if (statusCodeDownloadContinue != OTTO_OK) {
                 unlink(filepath.c_str());
-                return error("Error occurred while in download loop. Check otto.log for details.", statusCodeDownloadContinue);  
+                return downloadError(statusCodeDownloadContinue);  
             }
 
             std::cout << "[INFO]  Downloaded content saved in: " << filepath << std::endl;
@@ -197,7 +215,7 @@ int main(const int argc, char *argv[]) {
         return 4;
     }
 
-    const char* pathCertificate = "CEZ";
+    const char* pathCertificate = "certificate/test-softorg-pse.pfx";
     const char* envPathCertificate = getenv("PATH_CERTIFICATE");
     if (envPathCertificate != NULL) {
         pathCertificate = envPathCertificate;
@@ -210,5 +228,5 @@ int main(const int argc, char *argv[]) {
     }
 
     Cotto cotto(pathLog, pathCertificate, certificatePassword);
-    return cotto.workflow(objectUuid, developerId, fileExtension, pathDownload, forceOverwrite);
+    return cotto.workflow(objectUuid, developerId, fileExtension, pathDownload);
 }
