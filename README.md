@@ -69,7 +69,7 @@ cd cotto
 PATH_VENDOR="/path/to/otto-library/" make
 
 # Run `cotto`, provide objectUuid with -u option and your DEVELOPER_ID inline
-DEVELOPER_ID="00000" ./cotto -u 2b884e20-779d-4094-a1de-8304a6fc00c9
+DEVELOPER_ID="00000" ./cotto -u 468a69d4-0151-4681-9e8d-fcd87873d550
 ```
 
 Notice: You should set your five-digit Developer-ID (German: Hersteller-ID) as the environment variable `DEVELOPER_ID`. You could source it from for example `.env` or pass it inline to `cotto`, as shown in the steps above.
