@@ -28,6 +28,7 @@ clean:
 docker-build:
 	docker build \
 		-t $(image) \
+		--platform=linux/amd64 \
 		.
 
 docker-cmd:

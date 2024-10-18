@@ -29,13 +29,13 @@ cotto -u 468a69d4-0151-4681-9e8d-fcd87873d550 # ELOProtokoll / Lohnersatzleistun
 cotto -u e694eca1-7251-4629-a164-4634db811189 -e pdf # DivaBescheidESt
 ```
 
-Notice: The code and scripts have been tested so far only on Linux and macOS. Windows is pending tests.
+Notice: The code and scripts have been tested so far only on Linux and macOS.
 
 Hint: A list of object UUIDs is available with test certificates. You can get a list of them using `PostfachAnfrage` with the test certificate. The examples above are for `test-softorg-pse.pfx` and might be removed from the test instance after the time specified in the metadata.
 
 ## Vendor
 
-You need the official ELSTER Otto library. Download the ERiC package v40 for your platform from the [ELSTER developer area](https://www.elster.de/elsterweb/entwickler/infoseite/eric), unzip it and place it at a desired path. Feel free to place it in `./vendor/`. You need two libraries: `otto` and `eSigner` (platform dependent naming: `(lib)otto.{so|dylib|dll}` and `(lib)eSigner.{so|dylib|dll}`).
+You need the official ELSTER Otto library and header files. Download the ERiC package >= v40 for your platform from the [ELSTER developer area](https://www.elster.de/elsterweb/entwickler/infoseite/eric), unzip it and place it at a desired path. Feel free to place it in `./vendor/`. You need two libraries: `otto` and `eSigner` (platform dependent naming: `(lib)otto.{so|dylib|dll}` and `(lib)eSigner.{so|dylib|dll}`), as well as three header files `otto.h`, `otto_statuscode.h` and `otto_types.h`.
 
 Notice: The ERiC package, especially the included there libraries are subject to a separate license agreement (presented before download in the ELSTER developer area and included in the ERiC package itself).
 

@@ -1,7 +1,7 @@
 #include <iostream>
 #include <getopt.h>
 #include <unistd.h>
-#include "include/otto.h"
+#include "vendor/otto.h"
 
 int error(const std::string message, const OttoStatusCode code)
 {
@@ -28,14 +28,14 @@ int downloadError(const OttoStatusCode code)
     return error(message, code);
 }
 
-class Cotto {
+class CottoBlockwise {
     private:
         OttoInstanzHandle instance;
         OttoZertifikatHandle certificateHandle;
         OttoRueckgabepufferHandle contentHandle;
         OttoEmpfangHandle downloadHandle;
     public:
-        Cotto(const char* pathLog, const char* pathCertificate, const char* certificatePassword) {
+        CottoBlockwise(const char* pathLog, const char* pathCertificate, const char* certificatePassword) {
             // Create instance
             const OttoStatusCode statusCodeInstanceCreate = OttoInstanzErzeugen(pathLog, NULL, NULL, &instance);
             if (statusCodeInstanceCreate != OTTO_OK) {
@@ -50,7 +50,7 @@ class Cotto {
             std::cout << "[INFO]  Using certificate path: " << pathCertificate << std::endl;
         }
 
-        ~Cotto() {
+        ~CottoBlockwise() {
             // End download
             if (downloadHandle != NULL) {
                 const OttoStatusCode statusCodeDownloadEnd = OttoEmpfangBeenden(downloadHandle);
@@ -98,7 +98,7 @@ class Cotto {
             }
 
             const std::string filepath = std::string(pathDownload) + "/" + std::string(objectUuid) + "." + std::string(fileExtension);
-            FILE *file = fopen(filepath.c_str(), "ab");  // Open file for appending in binary mode
+            FILE *file = fopen(filepath.c_str(), "ab"); // Open file for appending in binary mode
             if (!file) {
                 std::cerr << "Failed to open file: " << filepath << std::endl;
                 return 6;
@@ -119,7 +119,7 @@ class Cotto {
                     downloadContinue = false;
                     break;
                 }
-                std::cout << "[INFO]  Downloaded: " << contentSize << " bytes" << std::endl;
+                std::cout << "[INFO]  Downloaded: " << contentSize << " Bytes" << std::endl;
                 const byteChar* contentBlock = OttoRueckgabepufferInhalt(contentHandle);
                 size_t contentWrite = fwrite(contentBlock, 1, contentSize, file);
                 if (contentWrite != contentSize) {
@@ -136,7 +136,95 @@ class Cotto {
 
             if (statusCodeDownloadContinue != OTTO_OK) {
                 unlink(filepath.c_str());
-                return downloadError(statusCodeDownloadContinue);  
+                return downloadError(statusCodeDownloadContinue);
+            }
+
+            std::cout << "[INFO]  Downloaded content saved in: " << filepath << std::endl;
+            return EXIT_SUCCESS;
+        }
+};
+
+class CottoInMemory {
+    private:
+        OttoInstanzHandle instance;
+        OttoRueckgabepufferHandle contentHandle;
+        const char* pathCertificate;
+        const char* certificatePassword;
+    public:
+        CottoInMemory(const char* pathLog, const char* providedPathCertificate, const char* providedCertificatePassword) {
+            // Create instance
+            const OttoStatusCode statusCodeInstanceCreate = OttoInstanzErzeugen(pathLog, NULL, NULL, &instance);
+            if (statusCodeInstanceCreate != OTTO_OK) {
+                error("Could not create an Otto instance. Check otto.log for details.", statusCodeInstanceCreate);
+            }
+
+            // Create content buffer
+            const OttoStatusCode statusCodeContentHandleCreate = OttoRueckgabepufferErzeugen(instance, &contentHandle);
+            if (statusCodeContentHandleCreate != OTTO_OK) {
+                error("Could not create handle for content.", statusCodeContentHandleCreate);
+            }
+
+            pathCertificate = providedPathCertificate;
+            certificatePassword = providedCertificatePassword;
+        }
+
+        ~CottoInMemory() {
+            // Release content buffer
+            if (contentHandle != NULL) {
+                const OttoStatusCode statusCodeContentRelease = OttoRueckgabepufferFreigeben(contentHandle);
+                if (statusCodeContentRelease != OTTO_OK) {
+                    error("Could not release content handle.", statusCodeContentRelease);
+                }
+            }
+
+            // Destroy instance
+            if (instance != NULL) {
+                const OttoStatusCode statusCodeInstanceDestroy = OttoInstanzFreigeben(instance);
+                if (statusCodeInstanceDestroy != OTTO_OK) {
+                    error("Could not destroy the Otto instance. Check otto.log for details.", statusCodeInstanceDestroy);
+                }
+            }
+        }
+
+        int workflow(const char* objectUuid, const uint32_t size, const char* developerId, const char* fileExtension, const char* pathDownload) const {
+            const std::string filepath = std::string(pathDownload) + "/" + std::string(objectUuid) + "." + std::string(fileExtension);
+            FILE *file = fopen(filepath.c_str(), "ab"); // Open file for appending in binary mode
+            if (!file) {
+                std::cerr << "Failed to open file: " << filepath << std::endl;
+                return 6;
+            }
+
+            OttoStatusCode statusCodeDownload = OttoDatenAbholen(
+                instance,
+                objectUuid,
+                size,
+                pathCertificate,
+                certificatePassword,
+                developerId,
+                NULL,
+                contentHandle
+            );
+
+            if (statusCodeDownload != OTTO_OK) {
+                unlink(filepath.c_str());
+                return downloadError(statusCodeDownload);
+            }
+
+            uint64_t contentSize = OttoRueckgabepufferGroesse(contentHandle);
+            std::cout << "[INFO]  Downloaded: " << contentSize << " Bytes" << std::endl;
+
+            if (contentSize > 0) {
+                const byteChar* contentBlock = OttoRueckgabepufferInhalt(contentHandle);
+                size_t contentWrite = fwrite(contentBlock, 1, contentSize, file);
+                if (contentWrite != contentSize) {
+                    std::cerr << "Failed to write to file: " << filepath << std::endl;
+                    fclose(file);
+                }
+            }
+
+            if (fclose(file) != 0) {
+                std::cerr << "Failed to close file: " << filepath << std::endl;
+                return 7;
             }
 
             std::cout << "[INFO]  Downloaded content saved in: " << filepath << std::endl;
@@ -149,21 +237,31 @@ int main(const int argc, char *argv[]) {
         std::cerr << "Usage:" << std::endl;
         std::cerr << "" << argv[0] << std::endl;
         std::cerr << "  -u objectUuid\t\tUUID of object to download (mandatory)" << std::endl;
-        std::cerr << "  -e extension\t\tSet filename extension of downloaded content [default: \"txt\"]" << std::endl;
-        std::cerr << "  -p password\t\tPassword for certificate [default: \"123456\"]" << std::endl;
-        std::cerr << "  -f\t\t\tForce file overwriting [default: false]" << std::endl;
+        std::cerr << "  -m size\t\tDownload object in-memory and allocate provided Bytes of memory (optional, max: 10485760 Bytes), when not provided or exceeds max download blockwise" << std::endl;
+        std::cerr << "  -e extension\t\tSet filename extension of downloaded content [optional, default: \"txt\"]" << std::endl;
+        std::cerr << "  -p password\t\tPassword for certificate [optional, default: \"123456\"]" << std::endl;
+        std::cerr << "  -f\t\t\tForce file overwriting [optional, default: false]" << std::endl;
         return 1;
     }
 
     int option;
     const char* objectUuid = NULL;
+    uint32_t memorySizeAllocation = 0;
     const char* fileExtension = "txt";
     const char* certificatePassword = "123456";
     bool forceOverwrite = false;
-    while ((option = getopt(argc, argv, "u:e:p:f")) != -1) {
+    while ((option = getopt(argc, argv, "u:m:e:p:f")) != -1) {
         switch (option) {
             case 'u':
                 objectUuid = optarg;
+                break;
+            case 'm':
+                char *endPtr;
+                memorySizeAllocation = std::strtoul(optarg, &endPtr, 10);
+                if (*endPtr != '\0' || memorySizeAllocation <= 0) {
+                    std::cerr << "Invalid memory size allocation: " << optarg << std::endl;
+                    return 9;
+                }
                 break;
             case 'e':
                 fileExtension = optarg;
@@ -227,6 +325,13 @@ int main(const int argc, char *argv[]) {
         pathLog = envPathLog;
     }
 
-    Cotto cotto(pathLog, pathCertificate, certificatePassword);
-    return cotto.workflow(objectUuid, developerId, fileExtension, pathDownload);
+    if (memorySizeAllocation > 0 && memorySizeAllocation <= 10485760) {
+        std::cout << "[INFO]  Using simplified in-memory data retrieval for objects smaller than 10485760 Bytes (10 MiB)" << std::endl;
+        CottoInMemory cotto(pathLog, pathCertificate, certificatePassword);
+        return cotto.workflow(objectUuid, memorySizeAllocation, developerId, fileExtension, pathDownload);
+    } else {
+        std::cout << "[INFO]  Using blockwise data retrieval" << std::endl;
+        CottoBlockwise cotto(pathLog, pathCertificate, certificatePassword);
+        return cotto.workflow(objectUuid, developerId, fileExtension, pathDownload);
+    }
 }
