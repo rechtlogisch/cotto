@@ -10,13 +10,14 @@ Notice: This demo is **not intended for productive usage**!
 
 ELSTER introduced on May 27th, 2024, a new library called Otto, which can be used to download objects from OTTER (Object Storage in ELSTER). The reason why ELSTER introduced the project and library is, that the current solution hit its limits. Otto was introduced together with a new version of Datenabholung.
 
-The currently available way of data retrieval with ERiC will be replaced client-side in ERiC version 41 (end November 2024; only Datenabholung v31 will be available) and server-side with the planned yearly minimal version increase mid-April 2025 (exact date TBA in 2025; only ERiC >= v41 with Datenabholung v31 can be used after that date). Therefore, a majority of software developers using currently ERiC Datenabholung will have to implement Otto in production by April 2025.
+The currently available way of data retrieval with ERiC will be replaced client-side in ERiC version 41 (on November 25th, 2024; only Datenabholung v31 will be available) and server-side with the planned yearly minimal version increase mid-April 2025 (exact date TBA in 2025; only ERiC >= v41 with Datenabholung v31 can be used after that date). Therefore, a majority of software developers using currently ERiC Datenabholung will have to implement Otto in production by April 2025.
 
 ## Usage
 
 ```bash
 ./cotto
   -u objectUuid         UUID of object to download (mandatory)
+  -m size               Allocate provided Bytes of memory and download object in-memory (optional, max: 10485760 Bytes), cf. Download modes
   -e extension          Set filename extension of downloaded content [default: "txt"]
   -p password           Password for certificate [default: "123456"]
   -f                    Force file overwriting [default: false]
@@ -79,6 +80,14 @@ Hint: The downloaded result will be saved in the same directory as `cotto`, unle
 ## Environment variables
 
 All supported environment variables are listed in [`.env.example`](.env.example). Feel free to copy them to `.env`, adjust accordingly and source for usage.
+
+## Download modes
+
+The demo showcases two methods for downloading objects: blockwise (default) and in-memory. Otter and Otto operates by design in a memory efficient way - streaming data and forwarding it to the desired storage blockwise. That is the optimal and memory-efficient way for big files. ELSTER engineers wrapped all needed calls and the download workflow in one function `OttoDatenAbholen()`, which simplifies the implementation and stores the complete object temporarily in-memory.
+
+This demo can operate in both modes. To download in-memory add option `-m` with a value exceeding `0` and not exceeding `10485760` Bytes (10 MiB). It is recommended to use the in-memory mode with objects where the final size is known and not exceeding (an arbitraly set) size of 10485760 Bytes.
+
+Hint: `-m` sets the minimal allocated memory size. When the object is bigger then the set size - Otto allocates as much as need and as much as available memory. Use at your own risk.
 
 ## Docker
 

@@ -237,7 +237,7 @@ int main(const int argc, char *argv[]) {
         std::cerr << "Usage:" << std::endl;
         std::cerr << "" << argv[0] << std::endl;
         std::cerr << "  -u objectUuid\t\tUUID of object to download (mandatory)" << std::endl;
-        std::cerr << "  -m size\t\tDownload object in-memory and allocate provided Bytes of memory (optional, max: 10485760 Bytes), when not provided or exceeds max download blockwise" << std::endl;
+        std::cerr << "  -m size\t\tAllocate provided Bytes of memory and download object in-memory (optional, max: 10485760 Bytes), when not provided or exceeds max download blockwise" << std::endl;
         std::cerr << "  -e extension\t\tSet filename extension of downloaded content [optional, default: \"txt\"]" << std::endl;
         std::cerr << "  -p password\t\tPassword for certificate [optional, default: \"123456\"]" << std::endl;
         std::cerr << "  -f\t\t\tForce file overwriting [optional, default: false]" << std::endl;
