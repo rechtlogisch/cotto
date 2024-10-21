@@ -83,11 +83,11 @@ All supported environment variables are listed in [`.env.example`](.env.example)
 
 ## Download modes
 
-The demo showcases two methods for downloading objects: blockwise (default) and in-memory. Otter and Otto operates by design in a memory efficient way - streaming data and forwarding it to the desired storage blockwise. That is the optimal and memory-efficient way for big files. ELSTER engineers wrapped all needed calls and the download workflow in one function `OttoDatenAbholen()`, which simplifies the implementation and stores the complete object temporarily in-memory.
+The demo showcases two methods for downloading objects: blockwise (default) and in-memory. Otter and Otto operate by design by streaming data and forwarding it to the desired storage blockwise. That is the optimal and memory-efficient way for large files. ELSTER engineers wrapped all the necessary calls and the download workflow in one function: `OttoDatenAbholen()`, which simplifies the implementation and temporarily stores the complete object in memory.
 
-This demo can operate in both modes. To download in-memory add option `-m` with a value exceeding `0` and not exceeding `10485760` Bytes (10 MiB). It is recommended to use the in-memory mode with objects where the final size is known and not exceeding (an arbitraly set) size of 10485760 Bytes.
+This demo can operate in both modes. To download in-memory, add the option `-m` with a value exceeding `0` and not exceeding `10485760` Bytes (10 MiB). It is recommended to use the in-memory mode with objects where the final size is known and does not exceed the arbitrarily set size of 10485760 Bytes.
 
-Hint: `-m` sets the minimal allocated memory size. When the object is bigger then the set size - Otto allocates as much as need and as much as available memory. Use at your own risk.
+Hint: `-m` sets the minimal allocated memory size. When the object is larger than the set size, Otto allocates as much as needed and as much as available memory. Use at your own risk.
 
 ## Docker
 
