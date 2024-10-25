@@ -194,6 +194,8 @@ class CottoInMemory {
                 return 6;
             }
 
+            std::cout << "[INFO]  Using certificate path: " << pathCertificate << std::endl;
+
             OttoStatusCode statusCodeDownload = OttoDatenAbholen(
                 instance,
                 objectUuid,
