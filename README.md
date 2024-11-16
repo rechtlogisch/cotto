@@ -34,7 +34,7 @@ Examples:
 
 ```bash
 cotto -u 468a69d4-0151-4681-9e8d-fcd87873d550 # ELOProtokoll / Lohnersatzleistung
-cotto -u e694eca1-7251-4629-a164-4634db811189 -e pdf # DivaBescheidESt
+cotto -u c48737b3-adfe-4e87-925c-7c362e00a416 -e pdf # DivaBescheidESt
 ```
 
 > [!NOTE]  
