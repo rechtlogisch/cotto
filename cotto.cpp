@@ -21,11 +21,45 @@ int downloadError(const OttoStatusCode code)
         case OTTO_TRANSFER_NOT_FOUND:
             message = "The OTTER server did not find the object.";
             break;
+        case OTTO_TRANSFER_CONNECTPROXY:
+            message = "Could not establish a connection to the proxy.";
+            break;
+        case OTTO_TRANSFER_CONNECTSERVER:
+            message = "Could not establish a connection to the OTTER server.";
+            break;
         default:
             message = "Error occurred while downloading. Check otto.log for details.";
             break;
     } 
     return error(message, code);
+}
+
+OttoInstanzHandle createOttoInstanceAndSetProxy(const char* pathLog, const char* proxyUrl) {
+    OttoInstanzHandle instance;
+
+    // Create instance
+    const OttoStatusCode statusCodeInstanceCreate = OttoInstanzErzeugen(pathLog, NULL, NULL, &instance);
+    if (statusCodeInstanceCreate != OTTO_OK) {
+        error("Could not create an Otto instance. Check otto.log for details.", statusCodeInstanceCreate);
+    }
+
+    // Set proxy
+    if (proxyUrl != NULL && std::string(proxyUrl) != "") {
+        std::cout << "[INFO]  Using proxy url: " << proxyUrl << std::endl;
+
+        OttoProxyKonfiguration proxyConfiguration;
+        proxyConfiguration.version = 1;
+        proxyConfiguration.url = proxyUrl;
+        proxyConfiguration.benutzerName = NULL;
+        proxyConfiguration.benutzerPasswort = NULL;
+        proxyConfiguration.authentifizierungsMethode = NULL;
+        const OttoStatusCode statusCodeProxyConfig = OttoProxyKonfigurationSetzen(instance, &proxyConfiguration);
+        if (statusCodeProxyConfig != OTTO_OK) {
+            error("Could not set proxy configuration. Check otto.log for details.", statusCodeProxyConfig);
+        }
+    }
+
+    return instance;
 }
 
 class CottoBlockwise {
@@ -35,12 +69,9 @@ class CottoBlockwise {
         OttoRueckgabepufferHandle contentHandle;
         OttoEmpfangHandle downloadHandle;
     public:
-        CottoBlockwise(const char* pathLog, const char* pathCertificate, const char* certificatePassword) {
-            // Create instance
-            const OttoStatusCode statusCodeInstanceCreate = OttoInstanzErzeugen(pathLog, NULL, NULL, &instance);
-            if (statusCodeInstanceCreate != OTTO_OK) {
-                error("Could not create an Otto instance. Check otto.log for details.", statusCodeInstanceCreate);
-            }
+        CottoBlockwise(const char* pathLog, const char* pathCertificate, const char* certificatePassword, const char* proxyUrl) {
+            // Create instance and set proxy
+            instance = createOttoInstanceAndSetProxy(pathLog, proxyUrl);
 
             // Open certificate
             const OttoStatusCode statusCodeCertificateOpen = OttoZertifikatOeffnen(instance, pathCertificate, certificatePassword, &certificateHandle);
@@ -151,12 +182,9 @@ class CottoInMemory {
         const char* pathCertificate;
         const char* certificatePassword;
     public:
-        CottoInMemory(const char* pathLog, const char* providedPathCertificate, const char* providedCertificatePassword) {
-            // Create instance
-            const OttoStatusCode statusCodeInstanceCreate = OttoInstanzErzeugen(pathLog, NULL, NULL, &instance);
-            if (statusCodeInstanceCreate != OTTO_OK) {
-                error("Could not create an Otto instance. Check otto.log for details.", statusCodeInstanceCreate);
-            }
+        CottoInMemory(const char* pathLog, const char* providedPathCertificate, const char* providedCertificatePassword, const char* proxyUrl) {
+            // Create instance and set proxy
+            instance = createOttoInstanceAndSetProxy(pathLog, proxyUrl);
 
             // Create content buffer
             const OttoStatusCode statusCodeContentHandleCreate = OttoRueckgabepufferErzeugen(instance, &contentHandle);
@@ -242,6 +270,7 @@ int main(const int argc, char *argv[]) {
         std::cerr << "  -m size\t\tAllocate provided Bytes of memory and download object in-memory (optional, max: 10485760 Bytes), when not provided or exceeds max download blockwise" << std::endl;
         std::cerr << "  -e extension\t\tSet filename extension of downloaded content [optional, default: \"txt\"]" << std::endl;
         std::cerr << "  -p password\t\tPassword for certificate [optional, default: \"123456\"]" << std::endl;
+        std::cerr << "  -y proxy\t\tProxy URL for communucation with the OTTER server (optional, by default no proxy is being set within Otto)" << std::endl;
         std::cerr << "  -f\t\t\tForce file overwriting [optional, default: false]" << std::endl;
         return 1;
     }
@@ -252,7 +281,9 @@ int main(const int argc, char *argv[]) {
     const char* fileExtension = "txt";
     const char* certificatePassword = "123456";
     bool forceOverwrite = false;
-    while ((option = getopt(argc, argv, "u:m:e:p:f")) != -1) {
+    const char* proxyUrl = NULL;
+
+    while ((option = getopt(argc, argv, "u:m:e:p:y:f")) != -1) {
         switch (option) {
             case 'u':
                 objectUuid = optarg;
@@ -270,6 +301,9 @@ int main(const int argc, char *argv[]) {
                 break;
             case 'p':
                 certificatePassword = optarg;
+                break;
+            case 'y':
+                proxyUrl = optarg;
                 break;
             case 'f':
                 forceOverwrite = true;
@@ -326,14 +360,18 @@ int main(const int argc, char *argv[]) {
     if (envPathLog != NULL) {
         pathLog = envPathLog;
     }
+    const char* envProxyUrl = getenv("PROXY_URL");
+    if (envProxyUrl != NULL && std::string(envProxyUrl) != "" && proxyUrl == NULL) {
+        proxyUrl = envProxyUrl;
+    }
 
     if (memorySizeAllocation > 0 && memorySizeAllocation <= 10485760) {
         std::cout << "[INFO]  Using simplified in-memory data retrieval for objects smaller than 10485760 Bytes (10 MiB)" << std::endl;
-        CottoInMemory cotto(pathLog, pathCertificate, certificatePassword);
+        CottoInMemory cotto(pathLog, pathCertificate, certificatePassword, proxyUrl);
         return cotto.workflow(objectUuid, memorySizeAllocation, developerId, fileExtension, pathDownload);
     } else {
         std::cout << "[INFO]  Using blockwise data retrieval" << std::endl;
-        CottoBlockwise cotto(pathLog, pathCertificate, certificatePassword);
+        CottoBlockwise cotto(pathLog, pathCertificate, certificatePassword, proxyUrl);
         return cotto.workflow(objectUuid, developerId, fileExtension, pathDownload);
     }
 }
