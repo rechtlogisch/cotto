@@ -1,37 +1,16 @@
 #include <iostream>
 #include <getopt.h>
-#include <unistd.h>
 #include "vendor/otto.h"
 
-int error(const std::string message, const OttoStatusCode code)
+int error(const OttoStatusCode code, const std::string message = "")
 {
-    std::cerr << "[ERROR] " << message << std::endl;
+    if (message != "") {
+        std::cerr << "[ERROR] " << message << std::endl;
+    }
+    // OttoHoleFehlertext was introduced in Otto 41.4, and therefore the code will not compile and won't work if a header/library with an older version is used
+    std::cerr << "[ERROR] " << OttoHoleFehlertext(code) << std::endl;
     std::cerr << "[CODE]  " << code << std::endl;
     return code;
-}
-
-int downloadError(const OttoStatusCode code)
-{
-    const char *message;
-    
-    switch (code) {
-        case OTTO_TRANSFER_UNAUTHORIZED:
-            message = "The client is not allowed to use the API.";
-            break;
-        case OTTO_TRANSFER_NOT_FOUND:
-            message = "The OTTER server did not find the object.";
-            break;
-        case OTTO_TRANSFER_CONNECTPROXY:
-            message = "Could not establish a connection to the proxy.";
-            break;
-        case OTTO_TRANSFER_CONNECTSERVER:
-            message = "Could not establish a connection to the OTTER server.";
-            break;
-        default:
-            message = "Error occurred while downloading. Check otto.log for details.";
-            break;
-    } 
-    return error(message, code);
 }
 
 OttoInstanzHandle createOttoInstanceAndSetProxy(const char* pathLog, const char* proxyUrl) {
@@ -40,7 +19,7 @@ OttoInstanzHandle createOttoInstanceAndSetProxy(const char* pathLog, const char*
     // Create instance
     const OttoStatusCode statusCodeInstanceCreate = OttoInstanzErzeugen(pathLog, NULL, NULL, &instance);
     if (statusCodeInstanceCreate != OTTO_OK) {
-        error("Could not create an Otto instance. Check otto.log for details.", statusCodeInstanceCreate);
+        error(statusCodeInstanceCreate, "Could not create an Otto instance. Check otto.log for details.");
     }
 
     // Set proxy
@@ -55,7 +34,7 @@ OttoInstanzHandle createOttoInstanceAndSetProxy(const char* pathLog, const char*
         proxyConfiguration.authentifizierungsMethode = NULL;
         const OttoStatusCode statusCodeProxyConfig = OttoProxyKonfigurationSetzen(instance, &proxyConfiguration);
         if (statusCodeProxyConfig != OTTO_OK) {
-            error("Could not set proxy configuration. Check otto.log for details.", statusCodeProxyConfig);
+            error(statusCodeProxyConfig, "Could not set proxy configuration. Check otto.log for details.");
         }
     }
 
@@ -76,7 +55,7 @@ class CottoBlockwise {
             // Open certificate
             const OttoStatusCode statusCodeCertificateOpen = OttoZertifikatOeffnen(instance, pathCertificate, certificatePassword, &certificateHandle);
             if (statusCodeCertificateOpen != OTTO_OK) {
-                error("Could not open certificate: " + std::string(pathCertificate), statusCodeCertificateOpen);
+                error(statusCodeCertificateOpen, "Could not open certificate: " + std::string(pathCertificate));
             }
             std::cout << "[INFO]  Using certificate path: " << pathCertificate << std::endl;
         }
@@ -86,7 +65,7 @@ class CottoBlockwise {
             if (downloadHandle != NULL) {
                 const OttoStatusCode statusCodeDownloadEnd = OttoEmpfangBeenden(downloadHandle);
                 if (statusCodeDownloadEnd != OTTO_OK) {
-                    error("Could not end download.", statusCodeDownloadEnd);
+                    error(statusCodeDownloadEnd, "Could not end download.");
                 }
             }
 
@@ -94,7 +73,7 @@ class CottoBlockwise {
             if (certificateHandle != NULL) {
                 const OttoStatusCode statusCodeCertificateClose = OttoZertifikatSchliessen(certificateHandle);
                 if (statusCodeCertificateClose != OTTO_OK) {
-                    error("Could not close certificate handle", statusCodeCertificateClose);
+                    error(statusCodeCertificateClose, "Could not close certificate handle.");
                 }
             }
 
@@ -102,7 +81,7 @@ class CottoBlockwise {
             if (contentHandle != NULL) {
                 const OttoStatusCode statusCodeContentRelease = OttoRueckgabepufferFreigeben(contentHandle);
                 if (statusCodeContentRelease != OTTO_OK) {
-                    error("Could not release content handle.", statusCodeContentRelease);
+                    error(statusCodeContentRelease, "Could not release content handle.");
                 }
             }
 
@@ -110,7 +89,7 @@ class CottoBlockwise {
             if (instance != NULL) {
                 const OttoStatusCode statusCodeInstanceDestroy = OttoInstanzFreigeben(instance);
                 if (statusCodeInstanceDestroy != OTTO_OK) {
-                    error("Could not destroy the Otto instance. Check otto.log for details.", statusCodeInstanceDestroy);
+                    error(statusCodeInstanceDestroy, "Could not destroy the Otto instance. Check otto.log for details.");
                 }
             }
         }
@@ -119,13 +98,13 @@ class CottoBlockwise {
             // Start download
             const OttoStatusCode statusCodeDownloadStart = OttoEmpfangBeginnen(instance, objectUuid, certificateHandle, developerId, &downloadHandle);
             if (statusCodeDownloadStart != OTTO_OK) {
-                return error("Could not start download. Check otto.log", statusCodeDownloadStart);
+                return error(statusCodeDownloadStart, "Could not start download. Check otto.log for details.");
             }
 
             // Create content buffer
             const OttoStatusCode statusCodeContentHandleCreate = OttoRueckgabepufferErzeugen(instance, &contentHandle);
             if (statusCodeContentHandleCreate != OTTO_OK) {
-                return error("Could not create handle for content.", statusCodeContentHandleCreate);
+                return error(statusCodeContentHandleCreate, "Could not create handle for content.");
             }
 
             const std::string filepath = std::string(pathDownload) + "/" + std::string(objectUuid) + "." + std::string(fileExtension);
@@ -167,7 +146,7 @@ class CottoBlockwise {
 
             if (statusCodeDownloadContinue != OTTO_OK) {
                 unlink(filepath.c_str());
-                return downloadError(statusCodeDownloadContinue);
+                return error(statusCodeDownloadContinue);
             }
 
             std::cout << "[INFO]  Downloaded content saved in: " << filepath << std::endl;
@@ -189,7 +168,7 @@ class CottoInMemory {
             // Create content buffer
             const OttoStatusCode statusCodeContentHandleCreate = OttoRueckgabepufferErzeugen(instance, &contentHandle);
             if (statusCodeContentHandleCreate != OTTO_OK) {
-                error("Could not create handle for content.", statusCodeContentHandleCreate);
+                error(statusCodeContentHandleCreate, "Could not create handle for content.");
             }
 
             pathCertificate = providedPathCertificate;
@@ -201,7 +180,7 @@ class CottoInMemory {
             if (contentHandle != NULL) {
                 const OttoStatusCode statusCodeContentRelease = OttoRueckgabepufferFreigeben(contentHandle);
                 if (statusCodeContentRelease != OTTO_OK) {
-                    error("Could not release content handle.", statusCodeContentRelease);
+                    error(statusCodeContentRelease, "Could not release content handle.");
                 }
             }
 
@@ -209,7 +188,7 @@ class CottoInMemory {
             if (instance != NULL) {
                 const OttoStatusCode statusCodeInstanceDestroy = OttoInstanzFreigeben(instance);
                 if (statusCodeInstanceDestroy != OTTO_OK) {
-                    error("Could not destroy the Otto instance. Check otto.log for details.", statusCodeInstanceDestroy);
+                    error(statusCodeInstanceDestroy, "Could not destroy the Otto instance. Check otto.log for details.");
                 }
             }
         }
@@ -237,7 +216,7 @@ class CottoInMemory {
 
             if (statusCodeDownload != OTTO_OK) {
                 unlink(filepath.c_str());
-                return downloadError(statusCodeDownload);
+                return error(statusCodeDownload);
             }
 
             uint64_t contentSize = OttoRueckgabepufferGroesse(contentHandle);
