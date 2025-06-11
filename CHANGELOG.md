@@ -5,11 +5,14 @@ All notable changes to `cotto` will be documented in this file.
 ## 1.3.0 - 2025-06-11
 
 > [!WARNING] 
-> Demo supports only Otto >= 42.1
+> Demo supports now only Otto >= 42.1
 
-- Replace OttoProxyKonfigurationSetzen with  (works only with Otto >= 41.4), remove downloadError() and change error()
-- Tested and runnable only with Otto 42.1
+- Add `OttoEinstellungSetzen()` (added in Otto 42.1)
+- Add `TIMEOUT_CONNECT` and `TIMEOUT_IDLE` as environment variables to configure Otto timeouts
+- Replace `OttoProxyKonfigurationSetzen()` with `OttoEinstellungSetzen()`
+- Tested and runnable (only) with Otto 42.1
 - Adjustments in README
+- Listed all know config settings in otto.ini-dist
 
 **Full Changelog**: https://github.com/rechtlogisch/cotto/compare/v1.2.3...v1.2.4
 
