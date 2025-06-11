@@ -14,7 +14,7 @@ All notable changes to `cotto` will be documented in this file.
 - Adjustments in README
 - Listed all know config settings in otto.ini-dist
 
-**Full Changelog**: https://github.com/rechtlogisch/cotto/compare/v1.2.3...v1.2.4
+**Full Changelog**: https://github.com/rechtlogisch/cotto/compare/v1.2.4...v1.3.0
 
 ## 1.2.4 - 2025-04-08
 - Add OttoHoleFehlertext (works only with Otto >= 41.4), remove downloadError() and change error()
