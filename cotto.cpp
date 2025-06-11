@@ -22,19 +22,29 @@ OttoInstanzHandle createOttoInstanceAndSetProxy(const char* pathLog, const char*
         error(statusCodeInstanceCreate, "Could not create an Otto instance. Check otto.log for details.");
     }
 
-    // Set proxy
+    // Set proxy URL
     if (proxyUrl != NULL && std::string(proxyUrl) != "") {
-        std::cout << "[INFO]  Using proxy url: " << proxyUrl << std::endl;
+        const OttoStatusCode statusCodeSetProxyUrl = OttoEinstellungSetzen(instance, "proxy.url", proxyUrl);
+        if (statusCodeSetProxyUrl != OTTO_OK) {
+            error(statusCodeSetProxyUrl, "Could not set proxy URL. Check otto.log for details.");
+        }
+        std::cout << "[INFO]  Using proxy URL: " << proxyUrl << std::endl;
+    }
 
-        OttoProxyKonfiguration proxyConfiguration;
-        proxyConfiguration.version = 1;
-        proxyConfiguration.url = proxyUrl;
-        proxyConfiguration.benutzerName = NULL;
-        proxyConfiguration.benutzerPasswort = NULL;
-        proxyConfiguration.authentifizierungsMethode = NULL;
-        const OttoStatusCode statusCodeProxyConfig = OttoProxyKonfigurationSetzen(instance, &proxyConfiguration);
-        if (statusCodeProxyConfig != OTTO_OK) {
-            error(statusCodeProxyConfig, "Could not set proxy configuration. Check otto.log for details.");
+    // Set timeouts, if provided in environment variables
+    const char* envTimeoutConnect = getenv("TIMEOUT_CONNECT");
+    if (envTimeoutConnect != NULL) {
+        const OttoStatusCode statusCodeSetTimeoutConnect = OttoEinstellungSetzen(instance, "transfer.connect_timeout", envTimeoutConnect);
+        if (statusCodeSetTimeoutConnect != OTTO_OK) {
+            error(statusCodeSetTimeoutConnect, "Could not set Otto connect timeout. Check otto.log for details.");
+        }
+    }
+
+    const char* envTimeoutIdle = getenv("TIMEOUT_IDLE");
+    if (envTimeoutIdle != NULL) {
+        const OttoStatusCode statusCodeSetTimeoutIdle = OttoEinstellungSetzen(instance, "transfer.idle_timeout", envTimeoutConnect);
+        if (statusCodeSetTimeoutIdle != OTTO_OK) {
+            error(statusCodeSetTimeoutIdle, "Could not set Otto idle timeout. Check otto.log for details.");
         }
     }
 

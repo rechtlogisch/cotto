@@ -2,6 +2,17 @@
 
 All notable changes to `cotto` will be documented in this file.
 
+## 1.3.0 - 2025-06-11
+
+> [!WARNING] 
+> Demo supports only Otto >= 42.1
+
+- Replace OttoProxyKonfigurationSetzen with  (works only with Otto >= 41.4), remove downloadError() and change error()
+- Tested and runnable only with Otto 42.1
+- Adjustments in README
+
+**Full Changelog**: https://github.com/rechtlogisch/cotto/compare/v1.2.3...v1.2.4
+
 ## 1.2.4 - 2025-04-08
 - Add OttoHoleFehlertext (works only with Otto >= 41.4), remove downloadError() and change error()
 - Tested and runnable with Otto 41.5 and eSigner 62.0.0.5
