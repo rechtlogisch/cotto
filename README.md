@@ -94,11 +94,15 @@ DEVELOPER_ID="00000" ./cotto -u 468a69d4-0151-4681-9e8d-fcd87873d550
 
 All supported environment variables are listed in [`.env.example`](.env.example). Feel free to copy them to `.env`, adjust accordingly and source for usage.
 
+## Otto settings
+
+Some Otto settings within this demo can be configured with environment variables. Others can be set in an `otto.ini` file placed next to the `otto` library. See [`otto.ini-dist`](vendor/otto.ini-dist) for a list of all currently known Otto settings. They are described in the chapter 4.1.4 of ERiC-Entwicklerhandbuch.pdf inside official documentation of the [ERiC package](#vendor).
+
 ## Download modes
 
 The demo showcases two methods for downloading objects: blockwise (default) and in-memory. OTTER and Otto operate by design by streaming data and forwarding it to the desired storage blockwise. That is the optimal and memory-efficient way for large files. ELSTER engineers wrapped all the necessary calls and the download workflow in one function: `OttoDatenAbholen()`, which simplifies the implementation and temporarily stores the complete object in memory.
 
-This demo can operate in both modes. To download in-memory, add the option `-m` with a value exceeding `0` and not exceeding `10485760` Bytes (10 MiB). It is recommended to use the in-memory mode with objects where the final size is known and does not exceed the arbitrarily set size of 10485760 Bytes.
+This demo can operate in both modes. To download in-memory, add the option `-m` with a value exceeding `0` and not exceeding `10485760` Bytes (10 MiB). It is recommended to use the in-memory mode with objects where the final size is known and does not exceed the arbitrarily set size of 10.485.760 Bytes.
 
 > [!IMPORTANT]  
 > `-m` sets the minimal allocated memory size. When the object is larger than the set size, Otto allocates as much as needed and as much as available memory. Use at your own risk.
