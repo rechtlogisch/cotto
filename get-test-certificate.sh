@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TARGET_DIRECTORY="certificate/"
+TARGET_DIRECTORY="certificate"
 CERTIFICATE_ARCHIVE_FILENAME="Test_Zertifikate.zip"
 
 curl -sS -o "$TARGET_DIRECTORY$CERTIFICATE_ARCHIVE_FILENAME" https://download.elster.de/download/schnittstellen/"$CERTIFICATE_ARCHIVE_FILENAME" && \
